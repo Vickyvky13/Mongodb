@@ -24,7 +24,7 @@ async def backup(client, message):
     try:
         # Create a backup of the MongoDB database
         backup_file = f"{DATABASE_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gz"
-        command = f"mongodump --uri={MONGO_URI}/{DATABASE_NAME} --archive={backup_file} --gzip"
+        command = f"mongodump --uri={MONGO_URI} --archive={backup_file} --gzip"
         subprocess.run(command, shell=True, check=True)
         
         # Send the backup file to the user
@@ -44,7 +44,7 @@ async def restore(client, message):
         backup_file_path = await message.download()
         
         # Restore the MongoDB database from the backup file
-        command = f"mongorestore --uri={MONGO_URI}/{DATABASE_NAME} --archive={backup_file_path} --gzip --drop"
+        command = f"mongorestore --uri={MONGO_URI} --archive={backup_file_path} --gzip --drop"
         subprocess.run(command, shell=True, check=True)
         
         # Clean up the downloaded backup file
