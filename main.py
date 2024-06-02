@@ -1,4 +1,5 @@
 import os
+import subprocess
 import zipfile
 from datetime import datetime
 from pyrogram import Client, filters
@@ -25,7 +26,7 @@ async def backup(client, message):
         # Create a backup of the MongoDB database
         backup_file = f"{DATABASE_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gz"
         command = f"mongodump --uri={MONGO_URI} --archive={backup_file} --gzip"
-        os.system(command)
+        subprocess.run(command, shell=True, check=True)
 
         # Check if the backup file was created
         if not os.path.exists(backup_file):
@@ -33,7 +34,7 @@ async def backup(client, message):
             return
 
         # Zip the backup file
-        zip_file = backup_file.replace(".gz", ".zip")
+        zip_file = f"{backup_file}.zip"
         with zipfile.ZipFile(zip_file, 'w') as zf:
             zf.write(backup_file, os.path.basename(backup_file))
 
@@ -78,7 +79,7 @@ async def restore(client, message):
 
         # Restore the MongoDB database from the backup file
         command = f"mongorestore --uri={MONGO_URI} --archive={backup_file_path} --gzip --drop"
-        os.system(command)
+        subprocess.run(command, shell=True, check=True)
 
         # Clean up the downloaded and extracted backup files
         os.remove(zip_file_path)
