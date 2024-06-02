@@ -1,5 +1,6 @@
 import os
 import subprocess
+import zipfile
 from datetime import datetime
 from pyrogram import Client, filters
 from pymongo import MongoClient
@@ -26,13 +27,19 @@ async def backup(client, message):
         backup_file = f"{DATABASE_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gz"
         command = f"mongodump --uri={MONGO_URI} --archive={backup_file} --gzip"
         subprocess.run(command, shell=True, check=True)
-        
-        # Send the backup file to the user
-        await app.send_document(message.chat.id, backup_file)
-        
-        # Clean up the backup file
+
+        # Zip the backup file
+        zip_file = backup_file.replace(".gz", ".zip")
+        with zipfile.ZipFile(zip_file, 'w') as zf:
+            zf.write(backup_file, os.path.basename(backup_file))
+
+        # Send the zip file to the user
+        await app.send_document(message.chat.id, zip_file)
+
+        # Clean up the backup and zip files
         os.remove(backup_file)
-        
+        os.remove(zip_file)
+
         await message.reply("Backup completed and sent!")
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
@@ -40,16 +47,24 @@ async def backup(client, message):
 @app.on_message(filters.command("restore") & filters.document)
 async def restore(client, message):
     try:
-        # Download the backup file
-        backup_file_path = await message.download()
-        
+        # Download the backup zip file
+        zip_file_path = await message.download()
+
+        # Unzip the backup file
+        with zipfile.ZipFile(zip_file_path, 'r') as zf:
+            zf.extractall()
+
+        # Find the backup file in the extracted contents
+        backup_file_path = [f for f in os.listdir() if f.endswith('.gz')][0]
+
         # Restore the MongoDB database from the backup file
         command = f"mongorestore --uri={MONGO_URI} --archive={backup_file_path} --gzip --drop"
         subprocess.run(command, shell=True, check=True)
-        
-        # Clean up the downloaded backup file
+
+        # Clean up the downloaded and extracted backup files
+        os.remove(zip_file_path)
         os.remove(backup_file_path)
-        
+
         await message.reply("Restore completed successfully!")
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
