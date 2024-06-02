@@ -28,10 +28,20 @@ async def backup(client, message):
         command = f"mongodump --uri={MONGO_URI} --archive={backup_file} --gzip"
         subprocess.run(command, shell=True, check=True)
 
+        # Check if the backup file was created
+        if not os.path.exists(backup_file):
+            await message.reply("Backup file not created.")
+            return
+
         # Zip the backup file
         zip_file = backup_file.replace(".gz", ".zip")
         with zipfile.ZipFile(zip_file, 'w') as zf:
             zf.write(backup_file, os.path.basename(backup_file))
+
+        # Check if the zip file was created
+        if not os.path.exists(zip_file):
+            await message.reply("Zip file not created.")
+            return
 
         # Send the zip file to the user
         await app.send_document(message.chat.id, zip_file)
@@ -50,12 +60,22 @@ async def restore(client, message):
         # Download the backup zip file
         zip_file_path = await message.download()
 
+        # Check if the zip file was downloaded
+        if not os.path.exists(zip_file_path):
+            await message.reply("Zip file not downloaded.")
+            return
+
         # Unzip the backup file
         with zipfile.ZipFile(zip_file_path, 'r') as zf:
             zf.extractall()
 
         # Find the backup file in the extracted contents
-        backup_file_path = [f for f in os.listdir() if f.endswith('.gz')][0]
+        backup_file_path = [f for f in os.listdir() if f.endswith('.gz')]
+        if not backup_file_path:
+            await message.reply("Backup file not found in the zip archive.")
+            return
+
+        backup_file_path = backup_file_path[0]
 
         # Restore the MongoDB database from the backup file
         command = f"mongorestore --uri={MONGO_URI} --archive={backup_file_path} --gzip --drop"
