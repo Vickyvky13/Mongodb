@@ -5,12 +5,12 @@ from pyrogram import Client, filters
 from pymongo import MongoClient
 
 # Telegram bot token and API details
-API_ID = 'YOUR_API_ID'
-API_HASH = 'YOUR_API_HASH'
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
+API_ID = '12526414'
+API_HASH = '78c6e4ddc726ef7a326d2439a379abb1'
+BOT_TOKEN = '7362816875:AAH-xM6fHJfEKzoveQpIPGuBeWWJ8ymVT7k'
 
 # MongoDB connection details
-MONGO_URI = "mongodb://localhost:27017"
+MONGO_URI = "mongodb+srv://shivanibaby528:15406578@cluster0.itxjmfh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DATABASE_NAME = "your_database"
 
 # Initialize Pyrogram Client
